@@ -1,0 +1,1827 @@
+local a = game:GetService("Players")
+local b = game:GetService("ReplicatedStorage")
+local c = game:GetService("RunService")
+local d = game:GetService("TweenService")
+local e = game:GetService("UserInputService")
+local f = game:GetService("CoreGui")
+local g = game:GetService("VirtualInputManager")
+local h = game:GetService("VirtualUser")
+local i = a.LocalPlayer
+local j = i.DisplayName
+local k = game:GetService("Lighting")
+local tr = game:GetService("TeleportService")
+local l = game:GetService("Workspace")
+local m = game:GetService("MaterialService")
+local n = game:GetService("SoundService")
+local o = game:GetService("ReplicatedFirst")
+local p = l.CurrentCamera
+
+local q = {
+	a = Color3.fromRGB(10, 10, 10),
+	b = Color3.fromRGB(20, 20, 20),
+	c = Color3.fromRGB(8, 8, 8),
+	d = Color3.fromRGB(28, 28, 28),
+	e = Color3.fromRGB(45, 45, 45),
+	f = Color3.fromRGB(22, 22, 22),
+	n = Color3.fromRGB(5, 5, 5),
+	g = Color3.fromRGB(255, 255, 255),
+	h = Color3.fromRGB(35, 35, 35),
+	i = Color3.fromRGB(255, 255, 255),
+	j = Color3.fromRGB(160, 160, 160),
+	k = Color3.fromRGB(110, 110, 110),
+	l = Color3.fromRGB(70, 70, 70),
+	o = Color3.fromRGB(55, 55, 55),
+	p = Color3.fromRGB(40, 40, 40),
+	r = Color3.fromRGB(170, 170, 170),
+	s = Color3.fromRGB(255, 255, 255),
+	m = Enum.Font.PermanentMarker
+}
+
+local r = {
+	a = 10,
+	b = 7,
+	c = 500,
+	d = 340,
+	e = 40,
+	f = 46,
+	g = 22,
+	h = 132,
+	i = 0.57
+}
+
+local function s(t, u)
+	local v = Instance.new(t)
+	for w, x in pairs(u or {}) do
+		v[w] = x
+	end
+	return v
+end
+
+local function y(z, aa)
+	return s("UICorner", {Parent = z, CornerRadius = UDim.new(0, aa or r.b)})
+end
+
+local function ab(ac, ad, ae)
+	return s("UIStroke", {Parent = ac, Color = ad or q.l, Thickness = ae or 1})
+end
+
+local function af(ag)
+	ag = math.max(0, math.floor(ag))
+	local ah = math.floor(ag / 86400)
+	local ai = math.floor((ag % 86400) / 3600)
+	local aj = math.floor((ag % 3600) / 60)
+	local ak = ag % 60
+	return string.format("%dD / %dH / %dM / %dS", ah, ai, aj, ak)
+end
+
+local function al(am)
+	if am >= 1e15 then
+		return string.format("%.1fqa", am / 1e15)
+	elseif am >= 1e12 then
+		return string.format("%.1ft", am / 1e12)
+	elseif am >= 1e9 then
+		return string.format("%.1fb", am / 1e9)
+	elseif am >= 1e6 then
+		return string.format("%.1fm", am / 1e6)
+	elseif am >= 1e3 then
+		return string.format("%.1fk", am / 1e3)
+	elseif am == math.floor(am) then
+		return tostring(math.floor(am))
+	else
+		return string.format("%.1f", am)
+	end
+end
+
+local function an(ao)
+	local ap = tostring(math.floor(ao))
+	local aq
+	while true do
+		ap, aq = ap:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+		if aq == 0 then break end
+	end
+	return ap
+end
+
+local function kz(la)
+	local lb = la < 0
+	la = math.abs(la)
+	local lc = {
+		{1e18, "Qi"},
+		{1e15, "Qa"},
+		{1e12, "T"},
+		{1e9, "B"},
+		{1e6, "M"}
+	}
+	for _, ld in ipairs(lc) do
+		local le, lf = ld[1], ld[2]
+		if la >= le then
+			local lg = la / le
+			if lf == "Qi" or lf == "Qa" then
+				return (lb and "-" or "") .. string.format("%.2f%s", lg, lf)
+			else
+				return (lb and "-" or "") .. string.format("%.1f%s", lg, lf)
+			end
+		end
+	end
+	return (lb and "-" or "") .. string.format("%.0f", la)
+end
+
+local ar = {}
+ar.__index = ar
+
+function ar.new(as)
+	as = as or {}
+	local at = setmetatable({}, ar)
+	at.Tabs = {}
+	at.TabOffsets = {}
+	at.Selected = 1
+	local au = s("ScreenGui", {
+		Name = as.Name or "TreeHub",
+		ResetOnSpawn = false,
+		Parent = f,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	})
+	at.Gui = au
+	local av = s("TextButton", {
+		Parent = au,
+		Size = UDim2.fromOffset(44, 44),
+		Position = UDim2.new(0.04, 0, 0.12, 0),
+		BackgroundColor3 = q.b,
+		Text = "",
+		AutoButtonColor = false,
+		BorderSizePixel = 0
+	})
+	y(av, 12)
+	ab(av, q.g, 1.5)
+	s("TextLabel", {
+		Parent = av,
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = as.ToggleLabel or "TXM",
+		Font = q.m,
+		TextSize = 15,
+		TextColor3 = q.g
+	})
+	local aw, ax, ay, az = false, nil, nil, false
+	av.InputBegan:Connect(function(ba)
+		if ba.UserInputType == Enum.UserInputType.MouseButton1 or ba.UserInputType == Enum.UserInputType.Touch then
+			aw, az, ax, ay = true, false, ba.Position, av.Position
+		end
+	end)
+	av.InputEnded:Connect(function(bb)
+		if bb.UserInputType == Enum.UserInputType.MouseButton1 or bb.UserInputType == Enum.UserInputType.Touch then
+			aw = false
+		end
+	end)
+	local bc, bd = as.Width or 500, as.Height or 340
+	local be = s("Frame", {
+		Parent = au,
+		Size = UDim2.fromOffset(bc, bd),
+		Position = UDim2.new(0.5, -bc / 2, 0.5, -bd / 2),
+		BackgroundColor3 = q.a,
+		BorderSizePixel = 0,
+		Active = true,
+		ClipsDescendants = true
+	})
+	y(be, r.a)
+	ab(be, q.o, 1)
+	at.Panel = be
+	local bf = s("Frame", {
+		Parent = be,
+		Size = UDim2.new(1, 0, 0, r.e),
+		BackgroundColor3 = q.b,
+		BorderSizePixel = 0
+	})
+	y(bf, r.a)
+	s("TextLabel", {
+		Parent = bf,
+		Size = UDim2.new(1, -20, 1, 0),
+		Position = UDim2.fromOffset(14, 0),
+		BackgroundTransparency = 1,
+		Text = as.Title or "Hub",
+		TextColor3 = q.i,
+		Font = q.m,
+		TextSize = 14,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+	local bg = s("Frame", {
+		Parent = be,
+		Size = UDim2.new(0, r.h, 1, -(r.e + r.f + r.g)),
+		Position = UDim2.fromOffset(0, r.e),
+		BackgroundColor3 = q.c,
+		BorderSizePixel = 0
+	})
+	local bh = s("Frame", {
+		Parent = bg,
+		Size = UDim2.fromOffset(3, 28),
+		Position = UDim2.fromOffset(0, 10),
+		BackgroundColor3 = q.g,
+		BorderSizePixel = 0
+	})
+	y(bh, 2)
+	at.Indicator = bh
+	local bi = s("ScrollingFrame", {
+		Parent = bg,
+		Size = UDim2.new(1, -4, 1, 0),
+		Position = UDim2.fromOffset(4, 0),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 0,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		BorderSizePixel = 0
+	})
+	s("UIListLayout", {Parent = bi, Padding = UDim.new(0, 4)})
+	s("UIPadding", {Parent = bi, PaddingTop = UDim.new(0, 8)})
+	at.TabList = bi
+	local bj = s("Frame", {
+		Parent = be,
+		Size = UDim2.new(1, -(r.h + 5), 1, -(r.e + r.f + r.g)),
+		Position = UDim2.fromOffset(r.h + 5, r.e),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0
+	})
+	at.Content = bj
+	local bk = s("Frame", {
+		Parent = be,
+		Size = UDim2.new(1, 0, 0, r.f),
+		Position = UDim2.new(0, 0, 1, -(r.f + r.g)),
+		BackgroundColor3 = q.b,
+		BorderSizePixel = 0
+	})
+	local bl = s("ImageLabel", {
+		Parent = bk,
+		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.new(0, 12, 0.5, -15),
+		BackgroundColor3 = q.f,
+		Image = as.AvatarImage or "",
+		BorderSizePixel = 0
+	})
+	y(bl, 15)
+	ab(bl, q.l, 1)
+	s("TextLabel", {
+		Parent = bk,
+		Size = UDim2.new(1, -56, 1, 0),
+		Position = UDim2.fromOffset(50, 0),
+		BackgroundTransparency = 1,
+		Text = as.FooterText or "",
+		TextColor3 = q.i,
+		Font = q.m,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+	local bm = s("Frame", {
+		Parent = be,
+		Size = UDim2.new(1, 0, 0, r.g),
+		Position = UDim2.new(0, 0, 1, -r.g),
+		BackgroundColor3 = q.n,
+		BorderSizePixel = 0
+	})
+	y(bm, r.a)
+	local bn = s("TextLabel", {
+		Parent = bm,
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = af(0),
+		TextColor3 = q.g,
+		Font = q.m,
+		TextSize = 13
+	})
+	at.TimerLabel = bn
+	local bo = os.clock()
+	local bp = 0
+	c.Heartbeat:Connect(function(bq)
+		bp += bq
+		if bp >= 1 then
+			bp -= 1
+			bn.Text = af(os.clock() - bo)
+		end
+	end)
+	local br = s("TextButton", {
+		Parent = be,
+		Size = UDim2.fromOffset(16, 16),
+		Position = UDim2.new(1, -16, 1, -16),
+		BackgroundTransparency = 1,
+		Text = "",
+		ZIndex = 10,
+		AutoButtonColor = false
+	})
+	local bs = true
+	av.MouseButton1Click:Connect(function()
+		if az then return end
+		bs = not bs
+		be.Visible = bs
+	end)
+	local bt, bu, bv = false, nil, nil
+	local bw, bx, by = false, nil, nil
+	local function bz(ca)
+		if ca.UserInputType == Enum.UserInputType.MouseButton1 or ca.UserInputType == Enum.UserInputType.Touch then
+			bt, bu, bv = true, ca.Position, be.Position
+		end
+	end
+	local function cb(cc)
+		if cc.UserInputType == Enum.UserInputType.MouseButton1 or cc.UserInputType == Enum.UserInputType.Touch then
+			bt = false
+		end
+	end
+	for _, cd in ipairs({bf, bg, bi, bj, bk, bm}) do
+		cd.InputBegan:Connect(bz)
+		cd.InputEnded:Connect(cb)
+	end
+	br.InputBegan:Connect(function(ce)
+		if ce.UserInputType == Enum.UserInputType.MouseButton1 or ce.UserInputType == Enum.UserInputType.Touch then
+			bw, bx, by = true, ce.Position, be.Size
+		end
+	end)
+	br.InputEnded:Connect(function(cf)
+		if cf.UserInputType == Enum.UserInputType.MouseButton1 or cf.UserInputType == Enum.UserInputType.Touch then
+			bw = false
+		end
+	end)
+	e.InputChanged:Connect(function(cg)
+		if cg.UserInputType ~= Enum.UserInputType.MouseMovement and cg.UserInputType ~= Enum.UserInputType.Touch then return end
+		if bt then
+			local ch = cg.Position - bu
+			be.Position = UDim2.new(bv.X.Scale, bv.X.Offset + ch.X, bv.Y.Scale, bv.Y.Offset + ch.Y)
+		elseif bw then
+			local ci = cg.Position - bx
+			be.Size = UDim2.new(by.X.Scale, math.max(r.c, by.X.Offset + ci.X), by.Y.Scale, math.max(r.d, by.Y.Offset + ci.Y))
+		elseif aw then
+			local cj = cg.Position - ax
+			if math.abs(cj.X) > 3 or math.abs(cj.Y) > 3 then
+				az = true
+			end
+			av.Position = UDim2.new(ay.X.Scale, ay.X.Offset + cj.X, ay.Y.Scale, ay.Y.Offset + cj.Y)
+		end
+	end)
+	at._beginDrag = bz
+	at._endDrag = cb
+	return at
+end
+
+local ck = {}
+ck.__index = ck
+
+function ar:AddTab(cl)
+	local cm = #self.Tabs + 1
+	local cn = s("TextButton", {
+		Parent = self.TabList,
+		Size = UDim2.new(1, -8, 0, 30),
+		BackgroundColor3 = q.d,
+		BackgroundTransparency = 1,
+		Text = " " .. cl,
+		TextColor3 = q.j,
+		Font = q.m,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		AutoButtonColor = false,
+		BorderSizePixel = 0
+	})
+	y(cn, 6)
+	cn.MouseEnter:Connect(function()
+		if cn.BackgroundTransparency == 1 then
+			d:Create(cn, TweenInfo.new(0.12), {BackgroundTransparency = 0, BackgroundColor3 = q.e}):Play()
+		end
+	end)
+	cn.MouseLeave:Connect(function()
+		if cn.TextColor3 ~= q.i then
+			d:Create(cn, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+		end
+	end)
+	local co = s("Frame", {
+		Parent = self.Content,
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Visible = cm == 1,
+		BorderSizePixel = 0
+	})
+	local cp = s("ScrollingFrame", {
+		Parent = co,
+		Size = UDim2.new(r.i, -6, 1, 0),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 3,
+		ScrollBarImageColor3 = q.g,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		BorderSizePixel = 0
+	})
+	s("UIListLayout", {Parent = cp, Padding = UDim.new(0, 6)})
+	s("UIPadding", {Parent = cp, PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 6)})
+	local cq = s("ScrollingFrame", {
+		Parent = co,
+		Size = UDim2.new(1 - r.i, -6, 1, 0),
+		Position = UDim2.new(r.i, 6, 0, 0),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 3,
+		ScrollBarImageColor3 = q.g,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		BorderSizePixel = 0
+	})
+	s("UIListLayout", {Parent = cq, Padding = UDim.new(0, 6)})
+	s("UIPadding", {Parent = cq, PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 10)})
+	if self._beginDrag then
+		for _, cr in ipairs({cp, cq, co}) do
+			cr.InputBegan:Connect(self._beginDrag)
+			cr.InputEnded:Connect(self._endDrag)
+		end
+	end
+	table.insert(self.Tabs, {Button = cn, Page = co})
+	table.insert(self.TabOffsets, 10 + (cm - 1) * 34)
+	cn.MouseButton1Click:Connect(function()
+		self:SelectTab(cm)
+	end)
+	return setmetatable({Main = cp, Side = cq, Page = co, Library = self}, ck)
+end
+
+function ar:SelectTab(cs)
+	self.Selected = cs
+	for ct, cu in ipairs(self.Tabs) do
+		cu.Page.Visible = (ct == cs)
+		if ct == cs then
+			d:Create(cu.Button, TweenInfo.new(0.15), {BackgroundTransparency = 0, BackgroundColor3 = q.h, TextColor3 = q.i}):Play()
+		else
+			d:Create(cu.Button, TweenInfo.new(0.15), {BackgroundTransparency = 1, TextColor3 = q.j}):Play()
+		end
+	end
+	d:Create(self.Indicator, TweenInfo.new(0.18), {Position = UDim2.fromOffset(0, self.TabOffsets[cs] or 10)}):Play()
+end
+
+function ck:AddLabel(cv, cw)
+	return s("TextLabel", {
+		Parent = cw and self.Side or self.Main,
+		Size = UDim2.new(1, 0, 0, 18),
+		BackgroundTransparency = 1,
+		Text = cv,
+		TextColor3 = q.g,
+		Font = q.m,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+end
+
+function ck:AddButton(cx, cy, cz)
+	local da = s("TextButton", {
+		Parent = cz and self.Side or self.Main,
+		Size = UDim2.new(1, 0, 0, 32),
+		BackgroundColor3 = q.d,
+		Text = cx,
+		TextColor3 = q.i,
+		Font = q.m,
+		TextSize = 13,
+		AutoButtonColor = false,
+		BorderSizePixel = 0
+	})
+	y(da, 7)
+	ab(da, q.l, 1)
+	da.MouseEnter:Connect(function()
+		d:Create(da, TweenInfo.new(0.12), {BackgroundColor3 = q.e}):Play()
+	end)
+	da.MouseLeave:Connect(function()
+		d:Create(da, TweenInfo.new(0.12), {BackgroundColor3 = q.d}):Play()
+	end)
+	da.Activated:Connect(function()
+		if cy then cy() end
+	end)
+	return da
+end
+
+function ck:AddToggle(db, dc, dd)
+	local de = s("TextButton", {
+		Parent = dd and self.Side or self.Main,
+		Size = UDim2.new(1, 0, 0, 32),
+		BackgroundColor3 = q.d,
+		Text = "",
+		AutoButtonColor = false,
+		BorderSizePixel = 0
+	})
+	y(de, 7)
+	ab(de, q.l, 1)
+	s("TextLabel", {
+		Parent = de,
+		Size = UDim2.new(1, -52, 1, 0),
+		Position = UDim2.fromOffset(12, 0),
+		BackgroundTransparency = 1,
+		Text = db,
+		TextColor3 = q.i,
+		Font = q.m,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+	local df = s("Frame", {
+		Parent = de,
+		Size = UDim2.fromOffset(34, 17),
+		Position = UDim2.new(1, -46, 0.5, -8.5),
+		BackgroundColor3 = q.p,
+		BorderSizePixel = 0
+	})
+	y(df, 9)
+	local dg = s("Frame", {
+		Parent = df,
+		Size = UDim2.fromOffset(13, 13),
+		Position = UDim2.fromOffset(2, 2),
+		BackgroundColor3 = q.r,
+		BorderSizePixel = 0
+	})
+	y(dg, 7)
+	local dh = false
+	de.Activated:Connect(function()
+		dh = not dh
+		if dh then
+			d:Create(df, TweenInfo.new(0.15), {BackgroundColor3 = q.g}):Play()
+			d:Create(dg, TweenInfo.new(0.15), {Position = UDim2.fromOffset(19, 2), BackgroundColor3 = q.s}):Play()
+		else
+			d:Create(df, TweenInfo.new(0.15), {BackgroundColor3 = q.p}):Play()
+			d:Create(dg, TweenInfo.new(0.15), {Position = UDim2.fromOffset(2, 2), BackgroundColor3 = q.r}):Play()
+		end
+		if dc then dc(dh) end
+	end)
+	return de
+end
+
+function ck:AddTextBox(di, dj, dk, dl)
+	local dm = s("Frame", {
+		Parent = dl and self.Side or self.Main,
+		Size = UDim2.new(1, 0, 0, 32),
+		BackgroundColor3 = q.d,
+		BorderSizePixel = 0
+	})
+	y(dm, 7)
+	ab(dm, q.l, 1)
+	s("TextLabel", {
+		Parent = dm,
+		Size = UDim2.new(0.38, 0, 1, 0),
+		Position = UDim2.fromOffset(10, 0),
+		BackgroundTransparency = 1,
+		Text = di,
+		TextColor3 = q.i,
+		Font = q.m,
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+	local dn = s("TextBox", {
+		Parent = dm,
+		Size = UDim2.new(0.55, -8, 0, 22),
+		Position = UDim2.new(0.42, 0, 0.5, -11),
+		BackgroundColor3 = q.f,
+		TextColor3 = q.i,
+		PlaceholderText = dj or "",
+		PlaceholderColor3 = q.k,
+		Font = q.m,
+		TextSize = 13,
+		Text = "",
+		ClearTextOnFocus = false,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		BorderSizePixel = 0
+	})
+	y(dn, 5)
+	s("UIPadding", {Parent = dn, PaddingLeft = UDim.new(0, 7)})
+	dn.FocusLost:Connect(function(do_)
+		if dk then dk(dn.Text, do_) end
+	end)
+	return dn
+end
+
+local dp = ar.new({
+	Title = j .. " On TOP",
+	FooterText = "Made By Tree",
+	AvatarImage = "rbxthumb://type=AvatarHeadShot&id=" .. i.UserId .. "&w=150&h=150",
+	Width = 500,
+	Height = 340,
+	ToggleLabel = "TXM"
+})
+
+local dq = dp:AddTab("Farming")
+local dr = dp:AddTab("Teleporting")
+local ds = dp:AddTab("Killing")
+local dt = dp:AddTab("Spectating")
+local du = dp:AddTab("Misc")
+local dv = dp:AddTab("Stats")
+local dw = dp:AddTab("Stats 2")
+dq.Side:Destroy()
+dq.Main.Size = UDim2.new(1, -12, 1, 0)
+dq.Main.Position = UDim2.new(0, 6, 0, 0)
+
+local function dx()
+	local char = i.Character or i.CharacterAdded:Wait()
+	return char:WaitForChild("HumanoidRootPart")
+end
+
+local function eu()
+	for _, folder in pairs(i.petsFolder:GetChildren()) do
+		if folder:IsA("Folder") then
+			for _, pet in pairs(folder:GetChildren()) do
+				pcall(function()
+					b.rEvents.equipPetEvent:FireServer("unequipPet", pet)
+				end)
+			end
+		end
+	end
+end
+
+local function ex(name)
+	eu()
+	local count = 0
+	for _, pet in pairs(i.petsFolder.Unique:GetChildren()) do
+		if pet.Name == name and count < 8 then
+			pcall(function()
+				b.rEvents.equipPetEvent:FireServer("equipPet", pet)
+			end)
+			count += 1
+		end
+	end
+end
+
+local function fb()
+	local folder = i:FindFirstChild("boostTimersFolder")
+	if not folder then return nil end
+	local egg = folder:FindFirstChild("Protein Egg")
+	return egg and egg.Value or nil
+end
+
+local function jungleSquat()
+	local root = dx()
+	root.CFrame = CFrame.new(-8372, 7, 2859)
+	task.wait(0.2667)
+	g:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+	task.wait(0.01667)
+	g:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end
+
+local function antiLag()
+	local plr = i
+	if not plr then return end
+	local gui = plr:FindFirstChildOfClass("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
+	local char = plr.Character
+	local cam = l.CurrentCamera
+	local function keep(obj)
+		if not obj then return true end
+		if obj == plr or obj == cam or obj == gui then return true end
+		if char and (obj == char or obj:IsDescendantOf(char)) then return true end
+		if gui and obj:IsDescendantOf(gui) then return true end
+		return false
+	end
+	local function clean(obj)
+		if obj and not keep(obj) then
+			pcall(function() obj:Destroy() end)
+		end
+	end
+	for _, v in ipairs(k:GetDescendants()) do clean(v) end
+	pcall(function()
+		k.GlobalShadows = false
+		k.FogStart = 9e9
+		k.FogEnd = 9e9
+		k.Brightness = 0
+		k.EnvironmentDiffuseScale = 0
+		k.EnvironmentSpecularScale = 0
+		k.ExposureCompensation = -20
+	end)
+	for _, v in ipairs(m:GetDescendants()) do clean(v) end
+	for _, v in ipairs(n:GetDescendants()) do
+		pcall(function()
+			if v:IsA("Sound") then
+				v:Stop()
+				v.Volume = 0
+			end
+		end)
+		clean(v)
+	end
+	pcall(function() l.Terrain:Clear() end)
+	for _, v in ipairs(l:GetDescendants()) do clean(v) end
+	task.wait(0.01667)
+	for _, v in ipairs(l:GetDescendants()) do clean(v) end
+	for _, v in ipairs(b:GetDescendants()) do clean(v) end
+	for _, v in ipairs(o:GetDescendants()) do clean(v) end
+	pcall(function() c:Set3dRenderingEnabled(false) end)
+	local old = gui and gui:FindFirstChild("OptimizationOverlay")
+	if old then old:Destroy() end
+	if gui then
+		local sg = Instance.new("ScreenGui")
+		sg.Name = "OptimizationOverlay"
+		sg.IgnoreGuiInset = true
+		sg.DisplayOrder = 2147483647
+		sg.ResetOnSpawn = false
+		sg.ZIndexBehavior = Enum.ZIndexBehavior.Global
+		sg.Parent = gui
+		local frame = Instance.new("Frame")
+		frame.Size = UDim2.fromScale(1, 1)
+		frame.BackgroundColor3 = Color3.new(0, 0, 0)
+		frame.BorderSizePixel = 0
+		frame.ZIndex = 2147483647
+		frame.Parent = sg
+	end
+end
+
+local es = false
+local fe = false
+local fi = false
+local muki = false
+
+dq:AddButton("Jungle Squat", jungleSquat)
+dq:AddButton("Anti Lag", antiLag)
+
+dq:AddToggle("Anti AFK", function(state)
+	es = state
+	if state then
+		task.spawn(function()
+			while es do
+				h:Button2Down(Vector2.new())
+				task.wait(0.01667)
+				h:Button2Up(Vector2.new())
+				task.wait(0.01667)
+			end
+		end)
+	end
+end)
+
+dq:AddToggle("Fast Farm", function(state)
+	fe = state
+	if state then
+		ex("Swift Samurai")
+		task.spawn(function()
+			local ra
+			ra = c.Heartbeat:Connect(function()
+				if not fe then
+					ra:Disconnect()
+					eu()
+					return
+				end
+				for _ = 1, 44 do
+					pcall(function()
+						i.muscleEvent:FireServer("rep")
+					end)
+				end
+			end)
+		end)
+	else
+		eu()
+	end
+end)
+
+dq:AddToggle("Hide Frames", function(state)
+	local gui = i.PlayerGui:FindFirstChild("statEffectsGui")
+	if gui then
+		gui.Enabled = not state
+	end
+end)
+
+dq:AddToggle("Auto Egg", function(state)
+	fi = state
+	if state then
+		task.spawn(function()
+			while fi do
+				pcall(function()
+					local timer = fb()
+					if timer == 0 or timer == nil then
+						local bag = i:FindFirstChild("Backpack")
+						local char = i.Character
+						if bag and char then
+							local hum = char:FindFirstChild("Humanoid")
+							local tool = bag:FindFirstChild("Protein Egg")
+							if hum and tool then
+								hum:EquipTool(tool)
+								task.wait(0.01667)
+							end
+						end
+						char = i.Character
+						if char then
+							local tool = char:FindFirstChild("Protein Egg")
+							if tool and i.muscleEvent then
+								i.muscleEvent:FireServer("proteinEgg", tool)
+							end
+						end
+					end
+				end)
+				task.wait(0.01667)
+			end
+		end)
+	end
+end)
+
+dq:AddToggle("All In One", function(state)
+	muki = state
+	if state then
+		es = true
+		task.spawn(function()
+			local rb
+			rb = c.Heartbeat:Connect(function()
+				if not (muki and es) then
+					rb:Disconnect()
+					return
+				end
+				h:Button2Down(Vector2.new())
+				task.wait()
+				h:Button2Up(Vector2.new())
+			end)
+		end)
+		task.wait(0.26)
+		local gui = i.PlayerGui:FindFirstChild("statEffectsGui")
+		if gui then
+			gui.Enabled = false
+		end
+		task.wait(0.26)
+		local kw = b.rEvents.showPetsEvent
+		kw:FireServer("hidePets")
+		task.wait(0.26)
+		fi = true
+		task.spawn(function()
+			local rc
+			rc = c.Heartbeat:Connect(function()
+				if not (muki and fi) then
+					rc:Disconnect()
+					return
+				end
+				pcall(function()
+					local timer = fb()
+					if timer == 0 or timer == nil then
+						local bag = i:FindFirstChild("Backpack")
+						local char = i.Character
+						if bag and char then
+							local hum = char:FindFirstChild("Humanoid")
+							local tool = bag:FindFirstChild("Protein Egg")
+							if hum and tool then
+								hum:EquipTool(tool)
+							end
+						end
+						char = i.Character
+						if char then
+							local tool = char:FindFirstChild("Protein Egg")
+							if tool and i.muscleEvent then
+								i.muscleEvent:FireServer("proteinEgg", tool)
+							end
+						end
+					end
+				end)
+			end)
+		end)
+		task.wait(0.26)
+		jungleSquat()
+		task.wait(0.26)
+		fe = true
+		ex("Swift Samurai")
+		task.spawn(function()
+			local rd
+			rd = c.Heartbeat:Connect(function()
+				if not (muki and fe) then
+					rd:Disconnect()
+					if not muki then
+						eu()
+					end
+					return
+				end
+				for _ = 1, 44 do
+					pcall(function()
+						i.muscleEvent:FireServer("rep")
+					end)
+				end
+			end)
+		end)
+		task.wait(0.52)
+		antiLag()
+	else
+		es = false
+		fe = false
+		fi = false
+		local gui = i.PlayerGui:FindFirstChild("statEffectsGui")
+		if gui then
+			gui.Enabled = true
+		end
+		local kw = b.rEvents.showPetsEvent
+		kw:FireServer("showPets")
+	end
+end)
+
+_G.tpListedPlayers = _G.tpListedPlayers or {}
+_G.blacklistedPlayers = _G.blacklistedPlayers or {}
+_G.watchlistedPlayers = _G.watchlistedPlayers or {}
+
+local fq = {
+	a = "TpList_Players.txt",
+	b = "Blacklist_Players.txt",
+	c = "Watchlist_Clans.txt"
+}
+
+local function fr(fs, ft)
+	writefile(fs, table.concat(ft, "\n"))
+end
+
+local function fu(fv)
+	local fw = {}
+	if isfile(fv) then
+		for fx in readfile(fv):gmatch("[^\r\n]+") do
+			local fy = fx:match("^%s*(.-)%s*$")
+			if fy and fy ~= "" then
+				table.insert(fw, fy)
+			end
+		end
+	end
+	return fw
+end
+
+_G.tpListedPlayers = fu(fq.a)
+_G.blacklistedPlayers = fu(fq.b)
+_G.watchlistedPlayers = fu(fq.c)
+
+local function fz(ga)
+	for _, gb in ipairs(_G.tpListedPlayers) do
+		if gb:lower() == ga.Name:lower() then return true end
+	end
+	return false
+end
+
+local function gc(gd)
+	for _, ge in ipairs(_G.blacklistedPlayers) do
+		if ge:lower() == gd.Name:lower() then return true end
+	end
+	return false
+end
+
+local function gf(gg)
+	local gh, gi = gg.Name:lower(), gg.DisplayName:lower()
+	for _, gj in ipairs(_G.watchlistedPlayers) do
+		local gk = gj:lower()
+		if gh:find(gk, 1, true) or gi:find(gk, 1, true) then return true end
+	end
+	return false
+end
+
+local function gl()
+	if not i.Character then
+		repeat task.wait() until i.Character
+	end
+	return i.Character
+end
+
+local function gm(gn)
+	return gn and gn.Character
+		and gn.Character:FindFirstChild("HumanoidRootPart")
+		and gn.Character:FindFirstChild("Humanoid")
+		and gn.Character.Humanoid.Health > 0
+end
+
+local function go()
+	for _, gp in pairs(i.Backpack:GetChildren()) do
+		if gp.Name == "Punch" and i.Character and i.Character:FindFirstChild("Humanoid") then
+			i.Character.Humanoid:EquipTool(gp)
+		end
+	end
+	if i:FindFirstChild("muscleEvent") then
+		i.muscleEvent:FireServer("punch", "leftHand")
+		i.muscleEvent:FireServer("punch", "rightHand")
+	end
+end
+
+local function gq(gr)
+	if not gm(gr) or not gl():FindFirstChild("LeftHand") then return end
+	pcall(function()
+		firetouchinterest(gr.Character.HumanoidRootPart, gl().LeftHand, 0)
+		firetouchinterest(gr.Character.HumanoidRootPart, gl().LeftHand, 1)
+		go()
+	end)
+end
+
+local function gs(gt)
+	if not gt then return 0 end
+	local gu = gt:FindFirstChild("Durability") or (gt:FindFirstChild("leaderstats") and gt.leaderstats:FindFirstChild("Durability"))
+	if not gu then return 0 end
+	local gv = 1
+	if gt:FindFirstChild("ultimatesFolder") and gt.ultimatesFolder:FindFirstChild("Infernal Health") then
+		gv += 0.15 * (gt.ultimatesFolder["Infernal Health"].Value or 0)
+	end
+	if gt:FindFirstChild("equippedPets") then
+		for _, gw in ipairs(gt.equippedPets:GetChildren()) do
+			if gw:IsA("ObjectValue") and gw.Value then
+				local gx = string.lower(gw.Value.Name)
+				if gx:match("mighty") and gx:match("monster") then gv += 0.5 end
+				if gx:match("small") and gx:match("fry") then gv += 0.25 end
+			end
+		end
+	end
+	return gu.Value * gv
+end
+
+local function gy(gz)
+	if not gz or not gz:FindFirstChild("leaderstats") or not gz.leaderstats:FindFirstChild("Strength") then return 0 end
+	local ha = gz.leaderstats.Strength.Value * (1 / 15)
+	local hb = 1
+	if gz:FindFirstChild("ultimatesFolder") and gz.ultimatesFolder:FindFirstChild("Demon Damage") then
+		hb += 0.1 * (gz.ultimatesFolder["Demon Damage"].Value or 0)
+	end
+	if gz:FindFirstChild("equippedPets") then
+		for _, hc in ipairs(gz.equippedPets:GetChildren()) do
+			if hc:IsA("ObjectValue") and hc.Value then
+				local hd = string.lower(hc.Value.Name)
+				if hd:match("wild") and hd:match("wizard") then hb += 0.5 end
+				if hd:match("chaos") and hd:match("sorcerer") then hb += 0.25 end
+			end
+		end
+	end
+	return ha * hb
+end
+
+local function he()
+	local hf = gl()
+	return hf and hf:FindFirstChild("HumanoidRootPart")
+end
+
+local hg = i:WaitForChild("petsFolder"):WaitForChild("Unique")
+local hh = b:WaitForChild("rEvents"):WaitForChild("equipPetEvent")
+
+local function hi()
+	for _, hj in ipairs(hg:GetChildren()) do
+		hh:FireServer("unequipPet", hj)
+	end
+end
+
+local function hk(hl, hm)
+	hi()
+	local hn = 0
+	for _, ho in ipairs(hg:GetChildren()) do
+		if ho.Name == hl and hn < (hm or 8) then
+			hh:FireServer("equipPet", ho)
+			hn += 1
+		end
+	end
+end
+
+local function hp(hq)
+	hq:AddButton("Equip Wild Wizards", function() hk("Wild Wizard") end)
+	hq:AddButton("Equip Mighty Monsters", function() hk("Mighty Monster") end)
+end
+
+hp(dr)
+hp(ds)
+local hr, hs = nil, nil
+local ht, hu = 0, 0
+
+local function hv()
+	local hw = tick()
+	if hw - ht < 0.2 then return end
+	ht = hw
+	if hu == 0 then
+		hk("Wild Wizard")
+		hu = 1
+	else
+		hk("Mighty Monster")
+		hu = 0
+	end
+end
+
+local function hx()
+	local hy = tick()
+	if hy - ht < 0.2 then return end
+	ht = hy
+	hk("Mighty Monster")
+end
+
+local function hz(ia)
+	hs = ia
+	if hr then hr:Disconnect() end
+	hr = c.Heartbeat:Connect(function()
+		if not hs then return end
+		if hs == "pack" then hv()
+		elseif hs == "hp" then hx() end
+		local ib = he()
+		if not ib then return end
+		for _, ic in ipairs(_G.tpListedPlayers) do
+			local id
+			for _, ie in ipairs(a:GetPlayers()) do
+				if ie.Name:lower() == ic:lower() then
+					id = ie
+					break
+				end
+			end
+			if id and gm(id) then
+				local ig = ib.CFrame
+				ib.CFrame = id.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
+				go()
+				local ih = id.Character:FindFirstChildOfClass("Humanoid")
+				if ih then
+					ih.Died:Once(function()
+						task.wait(0.01667)
+						if ib and ib.Parent then ib.CFrame = ig end
+					end)
+				end
+				break
+			end
+		end
+	end)
+end
+
+local function ii()
+	hs = nil
+	if hr then
+		hr:Disconnect()
+		hr = nil
+	end
+end
+
+dr:AddToggle("Kill Tp + Pack Spam", function(ij)
+	if ij then hz("pack")
+	elseif hs == "pack" then ii() end
+end)
+
+dr:AddToggle("Kill Tp + Mighty Monster Spam", function(ik)
+	if ik then hz("hp")
+	elseif hs == "hp" then ii() end
+end)
+
+dr:AddToggle("Kill Tp", function(il)
+	if il then
+		hs = "none"
+		if hr then hr:Disconnect() end
+		hr = c.Heartbeat:Connect(function()
+			if hs ~= "none" then return end
+			local im = he()
+			if not im then return end
+			for _, in_ in ipairs(_G.tpListedPlayers) do
+				local io
+				for _, ip in ipairs(a:GetPlayers()) do
+					if ip.Name:lower() == in_:lower() then
+						io = ip
+						break
+					end
+				end
+				if io and gm(io) then
+					local iq = im.CFrame
+					im.CFrame = io.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
+					go()
+					local ir = io.Character:FindFirstChildOfClass("Humanoid")
+					if ir then
+						ir.Died:Once(function()
+							task.wait(0.01667)
+							if im and im.Parent then im.CFrame = iq end
+						end)
+					end
+					break
+				end
+			end
+		end)
+	elseif hs == "none" then
+		ii()
+	end
+end)
+
+local is_ = dr:AddLabel("TpList: None")
+dr:AddButton("Clear TpList", function()
+	_G.tpListedPlayers = {}
+	fr(fq.a, _G.tpListedPlayers)
+end)
+
+task.spawn(function()
+	while true do
+		is_.Text = #_G.tpListedPlayers == 0 and "TpList: None" or "TpList: " .. table.concat(_G.tpListedPlayers, ", ")
+		task.wait(0.01667)
+	end
+end)
+
+local it_, iu = nil, nil
+local iv, iw = 0, 0
+
+local function ix()
+	local iy = tick()
+	if iy - iv < 0.2 then return end
+	iv = iy
+	if iw == 0 then
+		hk("Wild Wizard")
+		iw = 1
+	else
+		hk("Mighty Monster")
+		iw = 0
+	end
+end
+
+local function iz()
+	local ja = tick()
+	if ja - iv < 0.2 then return end
+	iv = ja
+	hk("Mighty Monster")
+end
+
+local function jb(jc)
+	iu = jc
+	if it_ then it_:Disconnect() end
+	it_ = c.Heartbeat:Connect(function()
+		if not iu then return end
+		if iu == "pack" then ix()
+		elseif iu == "hp" then iz() end
+		for _, jd in ipairs(a:GetPlayers()) do
+			if jd ~= i and gc(jd) then
+				gq(jd)
+			end
+		end
+	end)
+end
+
+local function je()
+	iu = nil
+	if it_ then
+		it_:Disconnect()
+		it_ = nil
+	end
+end
+
+ds:AddToggle("Kill + Pack Spam", function(jf)
+	if jf then jb("pack")
+	elseif iu == "pack" then je() end
+end)
+
+ds:AddToggle("Kill + Mighty Monster Spam", function(jg)
+	if jg then jb("hp")
+	elseif iu == "hp" then je() end
+end)
+
+ds:AddToggle("Kill", function(jh)
+	if jh then jb("none")
+	elseif iu == "none" then je() end
+end)
+
+ds:AddTextBox("Add To Watchlist", "Enter Clan Name", function(ji)
+	ji = ji:match("^%s*(.-)%s*$")
+	if ji == "" then return end
+	for _, jj in ipairs(_G.watchlistedPlayers) do
+		if jj:lower() == ji:lower() then return end
+	end
+	table.insert(_G.watchlistedPlayers, ji)
+	fr(fq.c, _G.watchlistedPlayers)
+end)
+
+local jk
+
+ds:AddToggle("Kill Watchlist", function(jl)
+	_G.killWatchlisted = jl
+	if jl then
+		if not jk then
+			jk = c.Heartbeat:Connect(function()
+				if not _G.killWatchlisted then return end
+				for _, jm in ipairs(a:GetPlayers()) do
+					if jm ~= i and gf(jm) and gm(jm) then
+						gq(jm)
+					end
+				end
+			end)
+		end
+	else
+		if jk then
+			jk:Disconnect()
+			jk = nil
+		end
+	end
+end)
+
+local jn = ds:AddLabel("Blacklist: None")
+ds:AddButton("Clear Blacklist", function()
+	_G.blacklistedPlayers = {}
+	fr(fq.b, _G.blacklistedPlayers)
+end)
+
+local jo = ds:AddLabel("Watchlist: None")
+ds:AddButton("Clear Watchlist", function()
+	_G.watchlistedPlayers = {}
+	fr(fq.c, _G.watchlistedPlayers)
+end)
+
+task.spawn(function()
+	while true do
+		jn.Text = #_G.blacklistedPlayers == 0 and "Blacklist: None" or "Blacklist: " .. table.concat(_G.blacklistedPlayers, ", ")
+		jo.Text = #_G.watchlistedPlayers == 0 and "Watchlist: None" or "Watchlist: " .. table.concat(_G.watchlistedPlayers, ", ")
+		task.wait(0.01667)
+	end
+end)
+
+dt.Side:Destroy()
+dt.Main.Size = UDim2.new(1, -12, 1, 0)
+dt.Main.Position = UDim2.new(0, 6, 0, 0)
+
+local jp = {
+	a = nil,
+	b = nil,
+	c = false,
+	d = nil,
+	e = false
+}
+
+getgenv().SpectateState = getgenv().SpectateState or {
+	SavedUserId = nil,
+	IsSpectating = false
+}
+
+local function jq()
+	if jp.d then
+		jp.d:Disconnect()
+		jp.d = nil
+	end
+	jp.e = false
+	if i.Character then
+		local jr = i.Character:FindFirstChildOfClass("Humanoid")
+		if jr then
+			p.CameraSubject = jr
+			p.CameraType = Enum.CameraType.Custom
+		end
+	end
+	jp.c = false
+	jp.a = nil
+	getgenv().SpectateState.IsSpectating = false
+end
+
+local function js()
+	if jp.e then
+		jp.e = false
+		task.wait(0.01667)
+	end
+	jp.e = true
+	task.spawn(function()
+		while jp.e do
+			task.wait(0.01667)
+			if jp.c and jp.a then
+				local jt = jp.a.Character
+				if jt then
+					local ju = jt:FindFirstChildOfClass("Humanoid")
+					if ju and p.CameraSubject ~= ju then
+						p.CameraSubject = ju
+					end
+				end
+			else
+				break
+			end
+		end
+	end)
+end
+
+local function jv(jw)
+	if not jw then
+		if jp.b then
+			for _, jx in ipairs(a:GetPlayers()) do
+				if jx.UserId == jp.b then
+					jw = jx
+					jp.a = jw
+					break
+				end
+			end
+		end
+		if not jw and getgenv().SpectateState.SavedUserId then
+			for _, jy in ipairs(a:GetPlayers()) do
+				if jy.UserId == getgenv().SpectateState.SavedUserId then
+					jw = jy
+					jp.a = jw
+					jp.b = jy.UserId
+					break
+				end
+			end
+		end
+		if not jw then
+			jq()
+			return
+		end
+	end
+	jp.b = jw.UserId
+	jp.a = jw
+	getgenv().SpectateState.SavedUserId = jw.UserId
+	if jp.d then
+		jp.d:Disconnect()
+		jp.d = nil
+	end
+	local function jz(ka)
+		if not jp.c or jp.b ~= jw.UserId then return end
+		local kb = ka:WaitForChild("Humanoid", 3)
+		if kb and jp.c and jp.b == jw.UserId then
+			p.CameraSubject = kb
+		end
+	end
+	if jw.Character then jz(jw.Character) end
+	jp.d = jw.CharacterAdded:Connect(function(kc)
+		if jp.c and jp.b == jw.UserId then
+			jz(kc)
+		end
+	end)
+end
+
+local function kd(ke)
+	if not ke then return end
+	jp.c = true
+	getgenv().SpectateState.IsSpectating = true
+	jp.a = ke
+	jp.b = ke.UserId
+	getgenv().SpectateState.SavedUserId = ke.UserId
+	jv(ke)
+	js()
+end
+
+local kf = {}
+
+local function kg()
+	for _, kh in ipairs(kf) do kh:Destroy() end
+	table.clear(kf)
+	for _, ki in ipairs(a:GetPlayers()) do
+		if ki ~= i then
+			local kj = dt:AddButton(ki.DisplayName, function()
+				if jp.c and jp.a == ki then
+					jq()
+				else
+					kd(ki)
+				end
+			end)
+			table.insert(kf, kj)
+		end
+	end
+end
+
+i.CharacterAdded:Connect(function(kk)
+	local kl = kk:WaitForChild("Humanoid", 3)
+	task.wait(0.01667)
+	if getgenv().SpectateState.IsSpectating then
+		jp.c = true
+		jv()
+		js()
+	else
+		if kl then p.CameraSubject = kl end
+	end
+end)
+
+du.Side:Destroy()
+du.Main.Size = UDim2.new(1, -12, 1, 0)
+du.Main.Position = UDim2.new(0, 6, 0, 0)
+
+du:AddButton("Anti Lag", function()
+	local km = workspace:FindFirstChildWhichIsA("Terrain")
+	if km then
+		km.WaterWaveSize = 0
+		km.WaterWaveSpeed = 0
+		km.WaterReflectance = 0
+		km.WaterTransparency = 1
+		k.ClockTime = 0
+	end
+	k.GlobalShadows = false
+	k.FogEnd = 9e9
+	k.FogStart = 9e9
+	pcall(function() settings().Rendering.QualityLevel = 1 end)
+	for _, kn in pairs(game:GetDescendants()) do
+		if kn:IsA("BasePart") then
+			kn.CastShadow = false
+			kn.Material = Enum.Material.Plastic
+			kn.Reflectance = 0
+			for _, ko in ipairs({"Back", "Bottom", "Front", "Left", "Right", "Top"}) do
+				kn[ko .. "Surface"] = Enum.SurfaceType.SmoothNoOutlines
+			end
+		elseif kn:IsA("Decal") then
+			kn.Transparency = 1
+			kn.Texture = ""
+		elseif kn:IsA("ParticleEmitter") or kn:IsA("Trail") then
+			kn.Enabled = false
+		end
+	end
+	for _, kp in pairs(k:GetDescendants()) do
+		if kp:IsA("PostEffect") then kp.Enabled = false end
+	end
+	if _G.antiLagConn then _G.antiLagConn:Disconnect() end
+	_G.antiLagConn = workspace.DescendantAdded:Connect(function(kq)
+		task.spawn(function()
+			if kq:IsA("ForceField") or kq:IsA("Sparkles") or kq:IsA("Smoke") or kq:IsA("Fire") or kq:IsA("Beam") then
+				c.Heartbeat:Wait()
+				kq:Destroy()
+			elseif kq:IsA("BasePart") then
+				kq.CastShadow = false
+			end
+		end)
+	end)
+end)
+
+local kr = s("Part", {
+	Name = "WalkOnWaterPart",
+	Size = Vector3.new(4, 0.1, 4),
+	Transparency = 1,
+	Anchored = true,
+	CanCollide = false,
+	CanTouch = false,
+	CanQuery = false,
+	Parent = workspace
+})
+
+local oz = {
+	a = {Enabled = false}
+}
+
+local function pa()
+	if not oz.a.Enabled or not i.Character then return end
+	local pb = i.Character:FindFirstChild("HumanoidRootPart")
+	if not pb then return end
+	local pc = pb:FindFirstChild("BodyVelocity")
+	if pc and pc.MaxForce == Vector3.new(100000, 0, 100000) then
+		pc:Destroy()
+	end
+	local pd = Instance.new("BodyVelocity")
+	pd.MaxForce = Vector3.new(100000, 0, 100000)
+	pd.Velocity = Vector3.new(0, 0, 0)
+	pd.P = 1250
+	pd.Parent = pb
+end
+
+local function pe()
+	if not i.Character then return end
+	local pf = i.Character:FindFirstChild("HumanoidRootPart")
+	if not pf then return end
+	local pg = pf:FindFirstChild("BodyVelocity")
+	if pg and pg.MaxForce == Vector3.new(100000, 0, 100000) then
+		pg:Destroy()
+	end
+end
+
+du:AddToggle("Anti Fling", function(ph)
+	oz.a.Enabled = ph
+	if ph then
+		pa()
+	else
+		pe()
+	end
+end)
+
+i.CharacterAdded:Connect(function(pi)
+	pi:WaitForChild("HumanoidRootPart", 5)
+	if oz.a.Enabled then
+		pa()
+	end
+end)
+
+local ks
+
+du:AddToggle("Walk On Water", function(kt)
+	if ks then
+		ks:Disconnect()
+		ks = nil
+	end
+	kr.CanCollide = kt
+	if kt then
+		ks = c.RenderStepped:Connect(function()
+			local ku = i.Character and i.Character:FindFirstChild("HumanoidRootPart")
+			if ku then
+				kr.CFrame = CFrame.new(ku.Position.X, -9.5, ku.Position.Z)
+			end
+		end)
+	else
+		kr.CanCollide = false
+		kr.Position = Vector3.new(0, -10000, 0)
+	end
+end)
+
+local ku = false
+
+du:AddToggle("Hide Pets", function(kv)
+	ku = kv
+	local kw = b.rEvents.showPetsEvent
+	if kv then
+		kw:FireServer("hidePets")
+	else
+		kw:FireServer("showPets")
+	end
+end)
+
+dv.Side:Destroy()
+dv.Main.Size = UDim2.new(1, -12, 1, 0)
+dv.Main.Position = UDim2.new(0, 6, 0, 0)
+local kv = i
+local kw = kv:WaitForChild("leaderstats")
+local kx = kw:WaitForChild("Strength")
+local ky = kv:WaitForChild("Durability")
+
+local function lh(li)
+	local lj = math.floor(li / 60)
+	local lk = li % 60
+	return string.format("%02d:%02d", lj, lk)
+end
+
+local function ll()
+	local lm = game:GetService("Stats")
+	local ln = lm:FindFirstChild("PerformanceStats")
+	local lo = ln and ln:FindFirstChild("Ping")
+	return lo and math.floor(lo:GetValue()) or 0
+end
+
+local lp = dv:AddLabel("Strength: 0 | Gained: 0")
+local lq = dv:AddLabel("Durability: 0 | Gained: 0")
+local lr = dv:AddLabel("Str Pace: 0/H • 0/D • 0/M • 0/Y")
+local ls = dv:AddLabel("Dura Pace: 0/H • 0/D • 0/M • 0/Y")
+local lt = dv:AddLabel("Egg Timer: 00:00")
+local lu = dv:AddLabel("Ping: 0 ms")
+local lv = kx.Value
+local lw = ky.Value
+local lx = {}
+local ly = {}
+local lz = 10
+
+task.spawn(function()
+	local ma = tick()
+	while true do
+		local mb = tick()
+		local mc = kx.Value
+		local md = ky.Value
+		local me = mc - lv
+		local mf = md - lw
+		pcall(function()
+			lp.Text = "Strength: " .. kz(mc) .. " | Gained: " .. kz(me)
+			lq.Text = "Durability: " .. kz(md) .. " | Gained: " .. kz(mf)
+		end)
+		pcall(function()
+			local mg = i:FindFirstChild("boostTimersFolder")
+			if mg then
+				local mh = mg:FindFirstChild("Protein Egg")
+				if mh and mh:IsA("IntValue") then
+					lt.Text = "Egg Timer: " .. lh(mh.Value)
+				else
+					lt.Text = "Egg Timer: 00:00"
+				end
+			else
+				lt.Text = "Egg Timer: 00:00"
+			end
+		end)
+		pcall(function()
+			lu.Text = "Ping: " .. ll() .. " ms"
+		end)
+		table.insert(lx, {time = mb, value = mc})
+		table.insert(ly, {time = mb, value = md})
+		while #lx > 0 and mb - lx[1].time > lz do
+			table.remove(lx, 1)
+		end
+		while #ly > 0 and mb - ly[1].time > lz do
+			table.remove(ly, 1)
+		end
+		if mb - ma >= lz then
+			ma = mb
+			if #lx >= 2 then
+				local mi = lx[#lx].value - lx[1].value
+				local mj = mi / lz
+				local mk = math.floor(mj * 3600)
+				local ml = math.floor(mj * 86400)
+				local mm = math.floor(mj * 2592000)
+				local mn = math.floor(mj * 31536000)
+				pcall(function()
+					lr.Text = "Str Pace: " .. kz(mk) .. "/H • " .. kz(ml) .. "/D • " .. kz(mm) .. "/M • " .. kz(mn) .. "/Y"
+				end)
+			end
+			if #ly >= 2 then
+				local mo = ly[#ly].value - ly[1].value
+				local mp = mo / lz
+				local mq = math.floor(mp * 3600)
+				local mr = math.floor(mp * 86400)
+				local ms = math.floor(mp * 2592000)
+				local mt = math.floor(mp * 31536000)
+				pcall(function()
+					ls.Text = "Dura Pace: " .. kz(mq) .. "/H • " .. kz(mr) .. "/D • " .. kz(ms) .. "/M • " .. kz(mt) .. "/Y"
+				end)
+			end
+		end
+		task.wait(0.01667)
+	end
+end)
+
+local mu = nil
+local mv = dw:AddLabel("Name: ")
+local mw = dw:AddLabel("Strength: ")
+local mx = dw:AddLabel("Durability: ")
+
+local function my(mz)
+	if not mz then return end
+	mv.Text = "Name: " .. mz.DisplayName
+	if not mz:FindFirstChild("leaderstats") then return end
+	local function na(nb, nc, nd)
+		local ne = mz.leaderstats:FindFirstChild(nd) or mz:FindFirstChild(nd)
+		if ne then
+			nb.Text = string.format("%s: %s", nc, kz(ne.Value))
+		else
+			nb.Text = nc .. ": 0"
+		end
+	end
+	na(mw, "Strength", "Strength")
+	na(mx, "Durability", "Durability")
+end
+
+task.spawn(function()
+	while true do
+		if mu then my(mu) end
+		task.wait(0.01667)
+	end
+end)
+
+local nf = dw:AddLabel("Enemy Health: ")
+local ng = dw:AddLabel("Enemy Damage: ")
+local nh = dw:AddLabel("Your Health: ")
+local ni = dw:AddLabel("Your Damage: ")
+local nj = dw:AddLabel("Hits To Kill: ")
+
+local function nk(nl)
+	if not nl then
+		nf.Text = "Enemy Health: "
+		ng.Text = "Enemy Damage: "
+		nh.Text = "Your Health: "
+		ni.Text = "Your Damage: "
+		nj.Text = "Hits To Kill: "
+		return
+	end
+	local nm = gs(nl)
+	local nn = gy(nl)
+	local no = gs(i)
+	local np = gy(i)
+	local nq = "inf"
+	if np > 0 then
+		local nr = math.ceil(nm / np)
+		if nr > 200 then nq = "inf"
+		elseif nr < 1 then nq = "instant"
+		else nq = tostring(nr) end
+	end
+	nf.Text = "Enemy Health: " .. kz(nm)
+	ng.Text = "Enemy Damage: " .. kz(nn)
+	nh.Text = "Your Health: " .. kz(no)
+	ni.Text = "Your Damage: " .. kz(np)
+	nj.Text = "Hits To Kill: " .. nq
+end
+
+task.spawn(function()
+	while true do
+		nk(mu)
+		task.wait(0.01667)
+	end
+end)
+
+local ns, nt, nu = {}, {}, {}
+
+local function nv()
+	for _, nw in ipairs(ns) do nw:Destroy() end
+	table.clear(ns)
+	for _, nx in ipairs(a:GetPlayers()) do
+		if nx ~= i then
+			local ny = dr:AddButton(nx.DisplayName, function()
+				if not fz(nx) then
+					table.insert(_G.tpListedPlayers, nx.Name)
+					fr(fq.a, _G.tpListedPlayers)
+				end
+			end, true)
+			table.insert(ns, ny)
+		end
+	end
+end
+
+local function nz()
+	for _, oa in ipairs(nt) do oa:Destroy() end
+	table.clear(nt)
+	for _, ob in ipairs(a:GetPlayers()) do
+		if ob ~= i then
+			local oc = ds:AddButton(ob.DisplayName, function()
+				if not gc(ob) then
+					table.insert(_G.blacklistedPlayers, ob.Name)
+					fr(fq.b, _G.blacklistedPlayers)
+				end
+			end, true)
+			table.insert(nt, oc)
+		end
+	end
+end
+
+local function od()
+	for _, oe in ipairs(nu) do oe:Destroy() end
+	table.clear(nu)
+	for _, of in ipairs(a:GetPlayers()) do
+		local og = dw:AddButton(of.DisplayName, function()
+			mu = of
+		end, true)
+		table.insert(nu, og)
+	end
+end
+
+nv()
+nz()
+kg()
+od()
+
+i.CharacterAdded:Connect(function(oh)
+	oh:WaitForChild("HumanoidRootPart", 5)
+end)
+
+a.PlayerAdded:Connect(function(oi)
+	task.wait(0.01667)
+	nv()
+	nz()
+	kg()
+	od()
+	if getgenv().SpectateState.IsSpectating and getgenv().SpectateState.SavedUserId == oi.UserId then
+		jp.c = true
+		jp.a = oi
+		jp.b = oi.UserId
+		jv(oi)
+		js()
+	end
+end)
+
+a.PlayerRemoving:Connect(function(oj)
+	task.wait(0.01667)
+	if oj.UserId == jp.b and jp.c then
+		jq()
+		jp.a = nil
+		jp.d = nil
+		if i.Character then
+			local ok = i.Character:FindFirstChildOfClass("Humanoid")
+			if ok then p.CameraSubject = ok end
+		end
+	end
+	nv()
+	nz()
+	kg()
+	od()
+end)
